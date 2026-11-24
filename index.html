@@ -129,6 +129,37 @@ textarea{min-height:110px;resize:vertical;line-height:1.55}
 .gl-item p{margin:.2em 0 .1em;color:var(--mute)}
 mark{background:rgba(184,134,59,.3);color:inherit;border-radius:3px}
 .loader{display:flex;align-items:center;justify-content:center;min-height:70vh;color:var(--mute)}
+.fr{direction:ltr;unicode-bidi:isolate;color:var(--acc);font-weight:600;border-bottom:1px dotted var(--acc);cursor:pointer}
+.fr.big{font-size:1.08rem;border-bottom:0}
+.playing{background:rgba(184,134,59,.22)!important}
+.tr{color:var(--mute);font-size:.88rem}
+.vocab{display:grid;gap:8px;grid-template-columns:1fr}
+@media(min-width:620px){.vocab{grid-template-columns:1fr 1fr}}
+.vrow{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:14px;padding:10px 14px;box-shadow:var(--shadow);text-align:right;width:100%;transition:background .2s}
+.vem{font-size:1.6rem;width:36px;text-align:center;flex:none}
+.vtx{flex:1;display:flex;flex-direction:column;min-width:0}
+.vtx .fr{border:0;font-size:1.1rem;text-align:right}
+.vtx .he{font-size:.95rem}
+.play{font-size:1.15rem;opacity:.75}
+.dialog{display:flex;flex-direction:column;gap:8px;margin:.6em 0 12px}
+.bub{max-width:85%;border-radius:16px;padding:10px 14px;display:flex;flex-direction:column;text-align:right;gap:2px}
+.bub.a{align-self:flex-start;background:var(--card);box-shadow:var(--shadow)}
+.bub.b{align-self:flex-end;background:var(--acc-soft)}
+.bub .fr{border:0;text-align:left}
+.bub .he{font-size:.88rem;color:var(--mute)}
+.bigplay{width:96px;height:96px;border-radius:50%;background:var(--acc);color:#fff;font-size:2.4rem;display:flex;align-items:center;justify-content:center;margin:10px auto 6px;box-shadow:var(--shadow)}
+.sentence{direction:ltr;unicode-bidi:isolate;text-align:center;font-size:1.35rem;font-weight:600;background:var(--card);border-radius:16px;padding:18px;box-shadow:var(--shadow);margin:8px 0}
+.blank{display:inline-block;min-width:70px;border-bottom:2.5px solid var(--gold);color:var(--gold)}
+.mgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mcol{display:flex;flex-direction:column;gap:10px}
+.mt{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:12px 10px;min-height:54px;font-size:1rem;transition:.15s}
+.mt.sel{border-color:var(--acc);background:var(--acc-soft)}
+.mt.ok{border-color:var(--ok);background:var(--okbg);opacity:.6}
+.mt.bad{border-color:var(--bad);background:var(--badbg)}
+.tiles{direction:ltr;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;min-height:52px}
+.tile{direction:ltr;background:var(--card);border:1.5px solid var(--line);border-radius:12px;padding:9px 14px;font-size:1.05rem;font-weight:600;box-shadow:var(--shadow)}
+.ansline{border-bottom:2px dashed var(--line);padding:10px 4px;margin:10px 0 16px}
+.ansline .tile{background:var(--acc-soft);border-color:var(--acc)}
 </style>
 </head>
 <body>
@@ -147,7 +178,7 @@ let S=loadState();
 function loadState(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.v){const d=DEF();return Object.assign(d,x,{settings:Object.assign(d.settings,x.settings||{})});}}catch(e){}return DEF();}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){toast('לא הצלחתי לשמור. ייתכן שהאחסון מלא.');}}
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const fmt=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>');
+const fmt=s=>esc(s).replace(/\*\*(.+?)\*\*/g,'<b>$1</b>').replace(/\[\[(.+?)\]\]/g,(m,t)=>'<span class="fr" dir="ltr" lang="fr" data-act="say" data-t="'+t+'">'+t+'</span>');
 const norm=s=>String(s||'').replace(/[\u0591-\u05C7]/g,'').replace(/[״"׳'\-–]/g,'').toLowerCase();
 const uid=()=>Math.random().toString(36).slice(2,9);
 function dk(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
@@ -173,7 +204,7 @@ function customPct(c){return c.lessons.length?Math.round(100*c.lessons.filter(l=
 
 /* ---------- flashcards (Leitner) ---------- */
 const IV=[0,1,2,4,8,16,32,64];
-function allTerms(){const out=[];tracks().forEach(t=>t.lessons.forEach(l=>(l.terms||[]).forEach(([term,def])=>out.push({id:lkey(t.id,l.id)+'#'+term,term,def,tid:t.id,lid:l.id,src:t.title,lt:l.title,go:'lesson/'+t.id+'/'+l.id}))));
+function allTerms(){const out=[];tracks().forEach(t=>t.lessons.forEach(l=>{const k=lkey(t.id,l.id),g='lesson/'+t.id+'/'+l.id;(l.vocab||[]).forEach(([fr,tr,he])=>{out.push({id:k+'#'+fr,term:fr,def:he,tr,fr,tid:t.id,lid:l.id,src:t.title,lt:l.title,go:g});out.push({id:k+'#>'+fr,term:he,def:fr,tr,fr,rev:true,tid:t.id,lid:l.id,src:t.title,lt:l.title,go:g});});}));tracks().forEach(t=>t.lessons.forEach(l=>(l.terms||[]).forEach(([term,def])=>out.push({id:lkey(t.id,l.id)+'#'+term,term,def,tid:t.id,lid:l.id,src:t.title,lt:l.title,go:'lesson/'+t.id+'/'+l.id}))));
  S.custom.forEach(c=>(c.cards||[]).forEach(k=>out.push({id:'c:'+c.id+'#'+k.id,term:k.term,def:k.def,tid:'c:'+c.id,src:c.title,lt:'',go:'custom/'+c.id})));return out;}
 function deck(){return allTerms().filter(c=>c.tid.startsWith('c:')||L(lkey(c.tid,c.lid))&&L(lkey(c.tid,c.lid)).read);}
 function dueCards(){const now=Date.now();return deck().filter(c=>((S.cards[c.id]||{}).due||0)<=now);}
@@ -183,7 +214,7 @@ function grade(id,knew){const c=S.cards[id]||{box:0,due:0,n:0};c.n=(c.n||0)+1;if
 let SP=null;
 function heVoice(){const vs=(window.speechSynthesis&&speechSynthesis.getVoices())||[];return vs.find(v=>/^he|^iw/i.test(v.lang))||null;}
 function canSpeak(){return 'speechSynthesis' in window;}
-function stopSpeak(){SP=null;try{speechSynthesis.cancel();}catch(e){}document.querySelectorAll('.saying').forEach(e=>e.classList.remove('saying'));const b=document.getElementById('sayBtn');if(b)b.classList.remove('on');}
+function stopSpeak(){SP=null;stopFr();try{speechSynthesis.cancel();}catch(e){}document.querySelectorAll('.saying').forEach(e=>e.classList.remove('saying'));const b=document.getElementById('sayBtn');if(b)b.classList.remove('on');}
 function speak(){if(SP){stopSpeak();return;}if(!canSpeak()){toast('הקראה לא נתמכת במכשיר הזה');return;}
  const els=[...document.querySelectorAll('[data-say]')];let i=0;SP={};const v=heVoice();if(!v)toast('לא נמצא קול בעברית. אפשר להוסיף קול עברי בהגדרות המכשיר.');
  document.getElementById('sayBtn').classList.add('on');
@@ -219,7 +250,7 @@ function tabs(cur){const due=dueCards().length;const t=[['','home','בית'],['r
 const V={quiz:null,sess:null,gq:'',gt:'all'};
 function render(){stopSpeak();closeModal();const p=(location.hash.slice(1)||'/').split('/').filter(Boolean).map(decodeURIComponent);const r=p[0]||'';
  let html;try{html=(VIEWS[r]||VIEWS[''])(p);}catch(e){console.error(e);html='<div class="empty">משהו השתבש. <button class="btn sm" data-go="">לדף הבית</button></div>';}
- $app.innerHTML='<div class="wrap fade">'+html+'</div>';tabs(['review','glossary','me','settings'].includes(r)?r:(r===''?'':null));window.scrollTo(0,0);after(r);}
+ $app.innerHTML='<div class="wrap'+(render.keep?'':' fade')+'">'+html+'</div>';render.keep=false;tabs(['review','glossary','me','settings'].includes(r)?r:(r===''?'':null));window.scrollTo(0,0);after(r);}
 function go(h){if(location.hash.slice(1)===h||(h===''&&!location.hash))render();else location.hash=h;}
 function after(r){if(r==='settings')fillRL();const n=document.getElementById('note');if(n)n.addEventListener('input',()=>{S.notes[n.dataset.k]=n.value;if(!n.value)delete S.notes[n.dataset.k];clearTimeout(after._t);after._t=setTimeout(()=>{save();const s=document.getElementById('noteSaved');if(s){s.textContent='נשמר ✓';}},500);});
  const g=document.getElementById('gq');if(g){g.addEventListener('input',()=>{V.gq=g.value;document.getElementById('glist').innerHTML=glossList();});}}
@@ -240,10 +271,10 @@ const VIEWS={
 track:p=>{const t=T[p[1]];if(!t)return VIEWS['']();const pc=trackPct(t),a=trackAvg(t);
  return '<div class="topbar">'+back('','בית')+'</div><div class="row">'+emo(t.emoji,t.color)+'<div><h1 style="margin:0">'+esc(t.title)+'</h1><div class="sub">'+esc(t.subtitle||'')+'</div></div></div>'+(t.intro?'<p class="muted">'+fmt(t.intro)+'</p>':'')+
  '<div class="card" style="margin:14px 0"><div class="row between small"><span>'+trackDone(t)+' מתוך '+t.lessons.length+' שיעורים</span><b>'+pc+'%</b></div><div style="margin-top:8px">'+bar(pc)+'</div>'+(a!=null?'<div class="small muted" style="margin-top:8px">ציון ממוצע במבחנים: '+a+'</div>':'')+'</div>'+
- '<div class="card" style="padding:0">'+t.lessons.map((l,i)=>{const k=lkey(t.id,l.id),x=L(k),u=unlocked(t,i),d=isDone(k);return '<button class="lesson-item'+(u?'':' locked')+'" data-'+(u?'go':'act')+'="'+(u?'lesson/'+t.id+'/'+l.id:'locked')+'"><div class="num'+(d?' done':'')+(u?'':' lock')+'">'+(d?'✓':u?i+1:'🔒')+'</div><div style="flex:1"><div style="font-weight:600">'+esc(l.title)+(S.bookmarks[k]?' <span class="small">🔖</span>':'')+'</div><div class="sub small">'+(l.min||6)+' דק׳ · '+(l.quiz||[]).length+' שאלות'+(S.notes[k]?' · יש הערות':'')+'</div></div>'+(x&&x.quiz?'<span class="score">'+x.quiz.best+'</span>':'')+'</button>';}).join('')+'</div>'+
+ '<div class="card" style="padding:0">'+t.lessons.map((l,i)=>{const k=lkey(t.id,l.id),x=L(k),u=unlocked(t,i),d=isDone(k);return '<button class="lesson-item'+(u?'':' locked')+'" data-'+(u?'go':'act')+'="'+(u?'lesson/'+t.id+'/'+l.id:'locked')+'"><div class="num'+(d?' done':'')+(u?'':' lock')+'">'+(d?'✓':u?i+1:'🔒')+'</div><div style="flex:1"><div style="font-weight:600">'+esc(l.title)+(S.bookmarks[k]?' <span class="small">🔖</span>':'')+'</div><div class="sub small">'+(l.min||6)+' דק׳ · '+(l.kind==='lang'?(l.vocab||[]).length+' מילים · תרגול':(l.quiz||[]).length+' שאלות')+(S.notes[k]?' · יש הערות':'')+'</div></div>'+(x&&x.quiz?'<span class="score">'+x.quiz.best+'</span>':'')+'</button>';}).join('')+'</div>'+
  '<div class="row" style="margin-top:16px;flex-wrap:wrap"><button class="btn ghost sm" data-act="practice" data-t="'+t.id+'">תרגול כרטיסיות המסלול</button></div>';},
 
-lesson:p=>{const f=findLesson(p[1],p[2]);if(!f)return VIEWS['']();const {t,l,i}=f,k=lkey(t.id,l.id);
+lesson:p=>{const f=findLesson(p[1],p[2]);if(!f)return VIEWS['']();if(f.l.kind==='lang')return langLesson(f);const {t,l,i}=f,k=lkey(t.id,l.id);
  if(!unlocked(t,i))return '<div class="topbar">'+back('track/'+t.id,t.title)+'</div><div class="empty">השיעור הזה ייפתח אחרי שתסיימי את השיעור הקודם.</div>';
  S.last=k;if(!S.lessons[k]){S.lessons[k]={opened:Date.now()};}save();const x=L(k),prev=t.lessons[i-1],nxt=t.lessons[i+1];
  return '<div class="read"><div class="topbar">'+back('track/'+t.id,t.title)+'<div class="row" style="gap:8px">'+(canSpeak()?'<button class="iconbtn" id="sayBtn" data-act="speak" aria-label="הקראה">🔊</button>':'')+'<button class="iconbtn'+(S.bookmarks[k]?' on':'')+'" data-act="bm" data-k="'+k+'" aria-label="סימנייה">🔖</button></div></div>'+
@@ -255,7 +286,7 @@ lesson:p=>{const f=findLesson(p[1],p[2]);if(!f)return VIEWS['']();const {t,l,i}=
  '<div class="row between" style="margin-top:14px">'+(prev?'<button class="btn ghost sm" data-go="lesson/'+t.id+'/'+prev.id+'">→ הקודם</button>':'<span></span>')+(nxt&&unlocked(t,i+1)?'<button class="btn ghost sm" data-go="lesson/'+t.id+'/'+nxt.id+'">הבא ←</button>':'')+'</div>'+
  (x&&(x.read||x.quiz)?'<div style="text-align:center;margin-top:18px"><button class="small muted" data-act="resetLesson" data-k="'+k+'" style="text-decoration:underline">איפוס השיעור</button></div>':'')+'</div>';},
 
-quiz:p=>{const f=findLesson(p[1],p[2]);if(!f)return VIEWS['']();const {t,l}=f,k=lkey(t.id,l.id);
+quiz:p=>{const f=findLesson(p[1],p[2]);if(!f)return VIEWS['']();if(f.l.kind==='lang')return langPractice(f);const {t,l}=f,k=lkey(t.id,l.id);
  if(!V.quiz||V.quiz.k!==k)V.quiz=newQuiz(k,l);const Q=V.quiz;
  const head='<div class="read"><div class="topbar">'+back('lesson/'+t.id+'/'+l.id,'לשיעור')+'<span class="sub">'+esc(l.title)+'</span></div>';
  if(Q.i>=Q.qs.length){const c=Q.ans.filter(a=>a.ok).length,sc=Math.round(100*c/Q.qs.length),x=L(k);const i=t.lessons.indexOf(l),nxt=t.lessons[i+1];
@@ -269,7 +300,7 @@ quiz:p=>{const f=findLesson(p[1],p[2]);if(!f)return VIEWS['']();const {t,l}=f,k=
 
 review:()=>{const s=V.sess;
  if(s&&s.q.length){const c=s.q[0];return '<h1>חזרה</h1><div class="row between small muted"><span>'+esc(c.src)+(c.lt?' · '+esc(c.lt):'')+'</span><span>נשארו '+s.q.length+'</span></div><div style="margin:8px 0 16px">'+bar(100*s.done/(s.done+s.q.length))+'</div>'+
-  '<div class="card flash fade" data-act="flip"><div class="term">'+esc(c.term)+'</div>'+(s.flip?'<div class="def fade">'+esc(c.def)+'</div>':'<div class="small muted" style="margin-top:16px">הקישי כדי לראות את ההסבר</div>')+'</div>'+
+  '<div class="card flash fade" data-act="flip">'+cardFace(c,s.flip)+'</div>'+
   (s.flip?'<div class="grid g2" style="margin-top:14px;grid-template-columns:1fr 1fr"><button class="btn ghost" data-act="grade" data-v="0">עוד לא 🔁</button><button class="btn" data-act="grade" data-v="1">ידעתי ✓</button></div>':'<button class="btn block line" style="margin-top:14px" data-act="flip">הצגת ההסבר</button>')+
   '<div style="text-align:center;margin-top:16px"><button class="small muted" data-act="endSess" style="text-decoration:underline">סיום החזרה</button></div>';}
  const done=s&&s.done;V.sess=null;const due=dueCards(),dk_=deck();const nextDue=dk_.map(c=>(S.cards[c.id]||{}).due||0).filter(d=>d>Date.now()).sort()[0];
@@ -323,10 +354,10 @@ settings:()=>{const s=S.settings;const seg=(k,opts)=>'<div class="seg">'+opts.ma
  '<div class="disc">האקדמיה של אסתר · '+tracks().length+' מסלולים · '+tracks().reduce((a,t)=>a+t.lessons.length,0)+' שיעורים<br>התכנים נועדו ללימוד והעשרה בלבד ואינם ייעוץ השקעות, ייעוץ מס או המלצה לפעולה. נתונים מתוארכים נכונים לשנת 2025 אלא אם צוין אחרת.</div>';}
 };
 function relDay(t){const d=Math.round((new Date(dk(new Date(t)))-new Date(dk()))/DAY);return d<=0?'היום':d===1?'מחר':'בעוד '+d+' ימים';}
-function glossList(){const q=norm(V.gq);let items=allTerms().filter(c=>V.gt==='all'||c.tid===V.gt);if(q)items=items.filter(c=>norm(c.term).includes(q)||norm(c.def).includes(q));
+function glossList(){const q=norm(V.gq);let items=allTerms().filter(c=>!c.rev&&(V.gt==='all'||c.tid===V.gt));if(q)items=items.filter(c=>norm(c.term).includes(q)||norm(c.def).includes(q));
  const seen=new Set();items=items.filter(c=>{const k=norm(c.term)+'|'+c.tid;if(seen.has(k))return false;seen.add(k);return true;}).sort((a,b)=>a.term.localeCompare(b.term,'he'));
  const hl=s=>{const e=esc(s);if(!V.gq.trim())return e;const r=V.gq.trim().replace(/[.*+?^${}()|[\]\\]/g,'\\$&');try{return e.replace(new RegExp('('+esc(r)+')','g'),'<mark>$1</mark>');}catch(x){return e;}};
- return items.length?'<div class="small muted">'+items.length+' מונחים</div>'+items.map(c=>'<div class="gl-item"><b>'+hl(c.term)+'</b><p>'+hl(c.def)+'</p><button class="small" style="color:var(--acc)" data-go="'+c.go+'">'+esc(c.src)+(c.lt?' · '+esc(c.lt):'')+' ←</button></div>').join(''):'<div class="empty">לא נמצאו מונחים</div>';}
+ return items.length?'<div class="small muted">'+items.length+' מונחים</div>'+items.map(c=>'<div class="gl-item">'+(c.fr?'<button class="fr big" dir="ltr" lang="fr" data-act="say" data-t="'+esc(c.fr)+'">🔈 '+hl(c.term)+'</button> <span class="tr">'+esc(c.tr)+'</span>':'<b>'+hl(c.term)+'</b>')+'<p>'+hl(c.def)+'</p><button class="small" style="color:var(--acc)" data-go="'+c.go+'">'+esc(c.src)+(c.lt?' · '+esc(c.lt):'')+' ←</button></div>').join(''):'<div class="empty">לא נמצאו מונחים</div>';}
 function fillRL(){const t=document.getElementById('rt').value,rl=document.getElementById('rl');let ls=[];if(t.startsWith('c:')){const c=custom(t.slice(2));ls=c?c.lessons.map(l=>[l.id,l.title]):[];}else ls=T[t].lessons.map((l,i)=>[l.id,(i+1)+'. '+l.title]);
  rl.innerHTML='<option value="*">כל המסלול</option>'+ls.map(([v,n])=>'<option value="'+esc(v)+'">'+esc(n)+'</option>').join('');}
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -356,9 +387,9 @@ const A={
  bm:d=>{if(S.bookmarks[d.k])delete S.bookmarks[d.k];else S.bookmarks[d.k]=Date.now();save();document.querySelector('[data-act=bm]').classList.toggle('on',!!S.bookmarks[d.k]);toast(S.bookmarks[d.k]?'נשמר בסימניות':'הוסר מהסימניות');},
  toQuiz:d=>{markRead(d.k);V.quiz=null;go('quiz/'+d.k);},
  markRead:d=>{const x=S.lessons[d.k]||(S.lessons[d.k]={});const first=!x.done;markRead(d.k);x.done=true;if(first)today().lessons++;bump('lessons',0);go('track/'+d.k.split('/')[0]);},
- pick:d=>{const Q=V.quiz;if(Q.picked!=null)return;Q.picked=+d.j;Q.ans.push({ok:Q.picked===Q.qs[Q.i].a});rerenderKeep();},
- nextQ:()=>{const Q=V.quiz;Q.i++;Q.picked=null;if(Q.i>=Q.qs.length)finishQuiz();render();},
- retry:()=>{const [tid,lid]=V.quiz.k.split('/');V.quiz=newQuiz(V.quiz.k,findLesson(tid,lid).l);render();},
+ pick:d=>{const Q=V.quiz;if(Q.picked!=null)return;Q.picked=+d.j;const st=Q.qs[Q.i];Q.ans.push({ok:Q.picked===st.a});rerenderKeep();if(st.t==='fill')playFr(st.full);else if(st.t==='listen')playFr(st.fr);},
+ nextQ:()=>{const Q=V.quiz;Q.i++;Q.picked=null;Q.m=null;Q.b=null;Q.checked=false;if(Q.i>=Q.qs.length)finishQuiz();render();const st=Q.qs[Q.i];if(st&&st.t==='listen')playFr(st.fr);},
+ retry:()=>{const [tid,lid]=V.quiz.k.split('/');const l=findLesson(tid,lid).l;V.quiz=(l.kind==='lang'?newPractice:newQuiz)(V.quiz.k,l);render();},
  resetLesson:d=>confirmBox('איפוס השיעור?','הציון והסטטוס של השיעור יימחקו. ההערות והסימנייה יישארו.','איפוס',()=>{resetKeys([d.k]);render();toast('השיעור אופס');}),
  startReview:()=>{V.sess={q:shuffle(dueCards()).slice(0,25),done:0,flip:false};render();},
  practice:d=>{const q=shuffle(allTerms().filter(c=>c.tid===d.t));if(!q.length){toast('אין כרטיסיות בנושא הזה עדיין');return;}V.sess={q:q.slice(0,25),done:0,flip:false};go('review');},
@@ -392,14 +423,83 @@ const A={
  wipe:()=>confirmBox('למחוק את כל הנתונים?','הכול יימחק מהמכשיר, כולל הנושאים וההערות שלך. אי אפשר לבטל.','מחיקה לצמיתות',()=>{S=DEF();save();applyTheme();V.quiz=null;go('');toast('כל הנתונים נמחקו');},true)
 };
 function resetKeys(keys){keys.forEach(k=>{delete S.lessons[k];Object.keys(S.cards).forEach(c=>{if(c.startsWith(k+'#'))delete S.cards[c];});if(S.last===k)S.last=null;});if(V.quiz&&keys.includes(V.quiz.k))V.quiz=null;save();}
-function rerenderKeep(){const y=window.scrollY;render();window.scrollTo(0,y);}
-document.addEventListener('click',e=>{const el=e.target.closest('[data-go],[data-act]');if(!el||el.disabled)return;if(el.dataset.go!=null&&!el.dataset.act){e.preventDefault();go(el.dataset.go);return;}const f=A[el.dataset.act];if(f){e.preventDefault();f(el.dataset);}});
+function rerenderKeep(){const y=window.scrollY;render.keep=true;render();window.scrollTo(0,y);}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-go],[data-act]');if(!el||el.disabled)return;if(el.dataset.go!=null&&!el.dataset.act){e.preventDefault();go(el.dataset.go);return;}const f=A[el.dataset.act];if(f){e.preventDefault();e.stopPropagation();f(el.dataset,el);}});
 window.addEventListener('hashchange',render);
 window.fillRL=fillRL;
 
+/* ---------- language tracks ---------- */
+let AU=null,AUel=null;
+function stopFr(){if(AU){AU.onended=null;AU.pause();AU=null;}if(AUel){AUel.classList.remove('playing');AUel=null;}}
+function ttsFr(t,cb){if(!canSpeak()){cb&&cb();return;}const u=new SpeechSynthesisUtterance(t);u.lang='fr-FR';const v=speechSynthesis.getVoices().find(v=>/^fr/i.test(v.lang));if(v)u.voice=v;u.rate=0.9;u.onend=()=>cb&&cb();u.onerror=()=>cb&&cb();speechSynthesis.speak(u);}
+function playFr(t,cb,el){t=String(t||'').trim();stopFr();try{speechSynthesis.cancel();}catch(e){}if(el){AUel=el;el.classList.add('playing');}
+ const done=()=>{if(el)el.classList.remove('playing');cb&&cb();};const f=(window.FR_AUDIO||{})[t];
+ if(f){const a=new Audio('audio/'+f+'.mp3');AU=a;a.onended=()=>{AU=null;done();};a.play().catch(()=>{if(AU===a){AU=null;ttsFr(t,done);}});}else ttsFr(t,done);}
+function vocabHtml(v){return '<div class="vocab">'+v.map(([fr,tr,he,em])=>'<button class="vrow" data-act="say" data-t="'+esc(fr)+'"><span class="vem">'+(em||'')+'</span><span class="vtx"><span class="fr" dir="ltr" lang="fr">'+esc(fr)+'</span><span class="tr">'+esc(tr)+'</span><span class="he">'+esc(he)+'</span></span><span class="play">🔈</span></button>').join('')+'</div>';}
+function dialogHtml(d){return '<div class="dialog">'+d.map(([w,fr,he],i)=>'<button class="bub '+(w==='A'?'a':'b')+'" data-act="say" data-t="'+esc(fr)+'" data-dl="'+i+'"><span class="fr" dir="ltr" lang="fr">'+esc(fr)+'</span><span class="he">'+esc(he)+'</span></button>').join('')+'</div><button class="btn ghost sm" data-act="sayAll">▶ השמעת כל השיחה</button>';}
+function langLesson(f){const {t,l,i}=f,k=lkey(t.id,l.id);
+ if(!unlocked(t,i))return '<div class="topbar">'+back('track/'+t.id,t.title)+'</div><div class="empty">השיעור הזה ייפתח אחרי שתסיימי את השיעור הקודם.</div>';
+ S.last=k;if(!S.lessons[k])S.lessons[k]={opened:Date.now()};save();const x=L(k),prev=t.lessons[i-1],nxt=t.lessons[i+1];const n=newPractice(k,l).qs.length;
+ return '<div class="read"><div class="topbar">'+back('track/'+t.id,t.title)+'<button class="iconbtn'+(S.bookmarks[k]?' on':'')+'" data-act="bm" data-k="'+k+'" aria-label="סימנייה">🔖</button></div>'+
+ '<div class="sub">'+t.emoji+' '+esc(t.title)+' · שיעור '+(i+1)+' מתוך '+t.lessons.length+' · '+(l.min||8)+' דק׳</div><h1>'+esc(l.title)+'</h1>'+(l.lead?'<p class="muted" style="font-size:1.05rem">'+fmt(l.lead)+'</p>':'')+
+ '<div class="lesson-body">'+blocks(l.body)+'</div><h2>מילים וביטויים <span class="small muted">· הקישי כדי לשמוע</span></h2>'+vocabHtml(l.vocab||[])+
+ (l.dialog?'<h2>שיחה לדוגמה</h2>'+dialogHtml(l.dialog):'')+
+ '<h2>ההערות שלי</h2><textarea id="note" data-k="'+k+'" placeholder="מילים שקשה לי לזכור, טיפים להגייה…">'+esc(S.notes[k]||'')+'</textarea><div class="small muted" id="noteSaved" style="margin-top:4px">'+(S.notes[k]?'נשמר ✓':'נשמר אוטומטית במכשיר')+'</div>'+
+ '<div style="margin-top:22px"><button class="btn block" data-act="toQuiz" data-k="'+k+'">'+(x&&x.quiz?'לתרגל שוב ('+x.quiz.best+')':'לתרגול ('+n+' תרגילים)')+' ←</button></div>'+
+ '<div class="row between" style="margin-top:14px">'+(prev?'<button class="btn ghost sm" data-go="lesson/'+t.id+'/'+prev.id+'">→ הקודם</button>':'<span></span>')+(nxt&&unlocked(t,i+1)?'<button class="btn ghost sm" data-go="lesson/'+t.id+'/'+nxt.id+'">הבא ←</button>':'')+'</div>'+
+ (x&&(x.read||x.quiz)?'<div style="text-align:center;margin-top:18px"><button class="small muted" data-act="resetLesson" data-k="'+k+'" style="text-decoration:underline">איפוס השיעור</button></div>':'')+'</div>';}
+function newPractice(k,l){const v=l.vocab||[],steps=[];
+ shuffle(v).slice(0,3).forEach(w=>{const o=shuffle([w,...shuffle(v.filter(x=>x!==w&&x[2]!==w[2])).slice(0,3)]);steps.push({t:'listen',fr:w[0],tr:w[1],he:w[2],o:o.map(x=>x[2]),a:o.indexOf(w)});});
+ if(v.length>=4)steps.push({t:'match',pairs:shuffle(v).slice(0,4)});
+ (l.fill||[]).forEach(([q,o,a,he,e])=>{const idx=shuffle(o.map((_,j)=>j));steps.push({t:'fill',q,he,o:idx.map(j=>o[j]),a:idx.indexOf(a),e,full:q.replace('___',o[a])});});
+ (l.build||[]).forEach(([fr,he,ex])=>steps.push({t:'build',fr,he,tiles:shuffle([...fr.split(' '),...(ex||[])])}));
+ (l.quiz||[]).forEach(([q,o,a,e])=>{const idx=shuffle(o.map((_,j)=>j));steps.push({t:'mc',q,o:idx.map(j=>o[j]),a:idx.indexOf(a),e});});
+ return {k,i:0,picked:null,ans:[],qs:steps,lang:true};}
+const FRS=t=>'<span class="fr" dir="ltr" lang="fr" style="border:0">'+esc(t)+'</span>';
+const normFr=s=>String(s).toLowerCase().replace(/[’]/g,"'").replace(/[?!.,;:]/g,' ').replace(/\s+/g,' ').trim();
+function stepSum(s){return s.t==='listen'?FRS(s.fr)+' = '+esc(s.he):s.t==='fill'?FRS(s.full)+' · '+esc(s.he):s.t==='build'?FRS(s.fr)+' · '+esc(s.he):s.t==='match'?'התאמת מילים: '+s.pairs.map(p=>FRS(p[0])+' = '+esc(p[2])).join(' · '):esc(s.q)+'<br>התשובה: '+esc(s.o[s.a]);}
+function langPractice(f){const {t,l}=f,k=lkey(t.id,l.id);if(!V.quiz||V.quiz.k!==k)V.quiz=newPractice(k,l);const Q=V.quiz;
+ const head='<div class="read"><div class="topbar">'+back('lesson/'+t.id+'/'+l.id,'לשיעור')+'<span class="sub">'+esc(l.title)+'</span></div>';
+ if(Q.i>=Q.qs.length){const c=Q.ans.filter(a=>a.ok).length,sc=Math.round(100*c/Q.qs.length),x=L(k),i=t.lessons.indexOf(l),nxt=t.lessons[i+1];
+  return head+'<div class="card" style="text-align:center;padding:28px 18px"><div style="font-size:2.6rem">'+(sc>=80?'🌟':sc>=50?'👏':'📘')+'</div><h1>'+sc+'</h1><div class="muted">'+c+' מתוך '+Q.qs.length+' תרגילים נכונים בניסיון הראשון'+(x&&x.quiz&&x.quiz.attempts>1?' · הטוב ביותר: '+x.quiz.best:'')+'</div><p>'+(sc>=80?'Très bien ! המילים של השיעור נוספו לכרטיסיות החזרה.':'כדאי להקשיב שוב למילים ולתרגל עוד פעם. זה חלק טבעי מלימוד שפה.')+'</p></div>'+
+  Q.qs.map((s,j)=>Q.ans[j]&&!Q.ans[j].ok?'<div class="fb bad" style="margin-top:12px">'+stepSum(s)+'</div>':'').join('')+
+  '<div class="grid" style="margin-top:18px">'+(nxt?'<button class="btn" data-go="lesson/'+t.id+'/'+nxt.id+'">לשיעור הבא: '+esc(nxt.title)+' ←</button>':'<button class="btn" data-go="track/'+t.id+'">'+(trackPct(t)===100?'סיימת את המסלול! 🎓':'חזרה למסלול')+'</button>')+'<button class="btn ghost" data-act="retry">לתרגל שוב</button><button class="btn line" data-go="track/'+t.id+'">לרשימת השיעורים</button></div></div>';}
+ const s=Q.qs[Q.i],pk=Q.picked,answered=Q.ans.length>Q.i,ok=answered&&Q.ans[Q.i].ok;
+ let h=head+'<div class="row between small muted"><span>תרגיל '+(Q.i+1)+' מתוך '+Q.qs.length+'</span><span>'+Q.ans.filter(a=>a.ok).length+' נכונים</span></div><div style="margin:8px 0 18px">'+bar(100*Q.i/Q.qs.length)+'</div>';
+ const opts=(o,lat)=>o.map((x,j)=>{let c='';if(pk!=null){c=j===s.a?' ok':j===pk?' bad':' dim';}return '<button class="opt'+c+'" '+(lat?'dir="ltr" lang="fr" style="text-align:left"':'dir="auto"')+' data-act="pick" data-j="'+j+'"'+(pk!=null?' disabled':'')+'>'+(pk!=null&&j===s.a?'✓ ':pk===j?'✗ ':'')+esc(x)+'</button>';}).join('');
+ let fb='';
+ if(s.t==='listen'){h+='<h2 style="margin-top:0">מה שמעת?</h2><button class="bigplay" data-act="say" data-t="'+esc(s.fr)+'" aria-label="השמעה">🔈</button><div class="small muted" style="text-align:center">הקישי כדי לשמוע שוב</div>'+opts(s.o);
+  if(pk!=null)fb=FRS(s.fr)+' <span class="tr">('+esc(s.tr)+')</span> = '+esc(s.he);}
+ else if(s.t==='fill'){h+='<h2 style="margin-top:0">השלימי את המשפט</h2><div class="sentence">'+(pk!=null?esc(s.full):esc(s.q).replace('___','<span class="blank">&nbsp;?&nbsp;</span>'))+'</div><div class="muted" style="text-align:center;margin-bottom:6px">'+esc(s.he)+'</div>'+opts(s.o,true);
+  if(pk!=null)fb=esc(s.e);}
+ else if(s.t==='mc'){h+='<h2 style="margin-top:0;font-size:1.15rem;line-height:1.5">'+fmt(s.q)+'</h2>'+opts(s.o);if(pk!=null)fb=esc(s.e);}
+ else if(s.t==='match'){const M=Q.m||(Q.m={fr:shuffle(s.pairs.map((_,j)=>j)),he:shuffle(s.pairs.map((_,j)=>j)),sel:null,done:[],err:0,bad:null});
+  const cell=(side,j)=>{const p=s.pairs[j],d=M.done.includes(j),sl=M.sel&&M.sel.side===side&&M.sel.j===j,bd=M.bad&&M.bad[side]===j;return '<button class="mt'+(d?' ok':sl?' sel':bd?' bad':'')+'" data-act="mt" data-s="'+side+'" data-j="'+j+'"'+(d?' disabled':'')+(side==='fr'?' dir="ltr" lang="fr"':'')+'>'+(side==='fr'?esc(p[0]):(p[3]||'')+' '+esc(p[2]))+'</button>';};
+  h+='<h2 style="margin-top:0">התאימי כל מילה לתרגום</h2><div class="mgrid"><div class="mcol">'+M.he.map(j=>cell('he',j)).join('')+'</div><div class="mcol">'+M.fr.map(j=>cell('fr',j)).join('')+'</div></div>';
+  if(answered)fb=ok?'כל ההתאמות נכונות מהניסיון הראשון.':'סיימת, עם '+M.err+' '+(M.err===1?'טעות':'טעויות')+' בדרך.';}
+ else if(s.t==='build'){const B=Q.b||(Q.b=[]);h+='<h2 style="margin-top:0">בני את המשפט בצרפתית</h2><div class="muted" style="text-align:center;font-size:1.1rem">״'+esc(s.he)+'״</div><div class="tiles ansline">'+B.map((ti,pos)=>'<button class="tile" data-act="untile" data-p="'+pos+'"'+(answered?' disabled':'')+'>'+esc(s.tiles[ti])+'</button>').join('')+'</div><div class="tiles">'+s.tiles.map((w,ti)=>B.includes(ti)?'':'<button class="tile" data-act="tile" data-i="'+ti+'"'+(answered?' disabled':'')+'>'+esc(w)+'</button>').join('')+'</div>'+
+  (!answered?'<button class="btn block" style="margin-top:18px" data-act="check"'+(B.length?'':' disabled')+'>בדיקה</button>':'');
+  if(answered)fb=(ok?'':'התשובה הנכונה: ')+FRS(s.fr)+' <button class="small" style="color:var(--acc)" data-act="say" data-t="'+esc(s.fr)+'">🔈 השמעה</button>';}
+ if(answered||pk!=null)h+='<div class="fb '+(ok?'ok':'bad')+' fade"><b>'+(ok?'נכון!':'לא בדיוק')+'</b>'+fb+'</div><button class="btn block" style="margin-top:16px" data-act="nextQ">'+(Q.i+1<Q.qs.length?'לתרגיל הבא ←':'לסיכום ←')+'</button>';
+ return h+'</div>';}
+function cardFace(c,flip){if(!c.fr)return '<div class="term">'+esc(c.term)+'</div>'+(flip?'<div class="def fade">'+esc(c.def)+'</div>':'<div class="small muted" style="margin-top:16px">הקישי כדי לראות את ההסבר</div>');
+ const frb='<div class="term" dir="ltr" lang="fr">'+esc(c.fr)+'</div><div class="tr" style="margin-top:6px">'+esc(c.tr)+'</div><button class="btn ghost sm" style="margin-top:12px" data-act="say" data-t="'+esc(c.fr)+'">🔈 השמעה</button>';
+ if(!c.rev)return frb+(flip?'<div class="def fade">'+esc(c.def)+'</div>':'<div class="small muted" style="margin-top:14px">מה התרגום? הקישי כדי לבדוק</div>');
+ return '<div class="small muted">איך אומרים בצרפתית?</div><div class="term" style="margin-top:6px">'+esc(c.term)+'</div>'+(flip?'<div class="fade" style="margin-top:14px">'+frb+'</div>':'<div class="small muted" style="margin-top:14px">הקישי כדי לראות</div>');}
+Object.assign(A,{
+ say:(d,el)=>playFr(d.t,null,el),
+ sayAll:()=>{const bs=[...document.querySelectorAll('.bub')];let i=0;const nx=()=>{if(i<bs.length){const b=bs[i++];b.scrollIntoView({block:'nearest',behavior:'smooth'});playFr(b.dataset.t,nx,b);}};nx();},
+ mt:(d,el)=>{const Q=V.quiz,s=Q.qs[Q.i],M=Q.m,j=+d.j;if(Q.ans.length>Q.i)return;if(d.s==='fr')playFr(s.pairs[j][0]);M.bad=null;
+  if(!M.sel||M.sel.side===d.s){M.sel={side:d.s,j};rerenderKeep();return;}
+  if(M.sel.j===j){M.done.push(j);M.sel=null;if(M.done.length===s.pairs.length)Q.ans.push({ok:M.err===0});}else{M.err++;M.bad={[d.s]:j,[M.sel.side]:M.sel.j};M.sel=null;}rerenderKeep();},
+ tile:d=>{V.quiz.b.push(+d.i);rerenderKeep();},
+ untile:d=>{V.quiz.b.splice(+d.p,1);rerenderKeep();},
+ check:()=>{const Q=V.quiz,s=Q.qs[Q.i];const got=Q.b.map(i=>s.tiles[i]).join(' ');Q.ans.push({ok:normFr(got)===normFr(s.fr)});rerenderKeep();playFr(s.fr);}
+});
+
 /* ---------- boot ---------- */
 function loadScript(src){return new Promise(r=>{const s=document.createElement('script');s.src=src;s.onload=()=>r(true);s.onerror=()=>r(false);document.head.appendChild(s);});}
-(async function boot(){applyTheme();await Promise.all((window.ACADEMY_TRACKS||[]).map(id=>loadScript('content/'+id+'.js')));render();
+(async function boot(){applyTheme();await Promise.all([...(window.ACADEMY_TRACKS||[]),...(window.ACADEMY_EXTRA||[])].map(id=>loadScript('content/'+id+'.js')));render();
  if('serviceWorker' in navigator&&location.protocol!=='file:')navigator.serviceWorker.register('sw.js').catch(()=>{});})();
 </script>
 </body>
